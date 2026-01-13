@@ -1,3 +1,18 @@
+/* Importar fuente moderna */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Aplicarla a todo */
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: #f3f4f6; /* Un gris más suave que el blanco puro */
+}
+
+/* Efecto de cristal para el carrito (Opcional, se ve muy pro) */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
