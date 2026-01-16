@@ -11,6 +11,7 @@ export default function OrderSummary({
   cancelarOrden, 
   numeroMesa, 
   idRestaurante, 
+  nombreMesero,
   eliminarDelCarrito,
   colorBoton 
 }) {
@@ -52,7 +53,8 @@ export default function OrderSummary({
         estado: "pendiente", 
         mesa: numeroMesa ? `Mesa ${numeroMesa}` : "Barra / Para Llevar",
         uid: idRestaurante,
-        numeroTicket: nuevoNumero
+        numeroTicket: nuevoNumero,
+        mesero: nombreMesero || null
       };
 
       // 3. GUARDAR

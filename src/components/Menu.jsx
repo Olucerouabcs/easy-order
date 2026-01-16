@@ -56,7 +56,7 @@ export default function Menu({ agregarAlCarrito, platillos = [], estiloMarca }) 
             <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
                 
                 <div className="h-40 bg-gray-50 flex items-center justify-center relative overflow-hidden group">
-                {item.imagen?.includes("http") ? (
+                {item.imagen?.includes("http") || item.imagen?.includes("data:image") ? (
                     <img src={item.imagen} alt={item.nombre} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"/>
                 ) : (
                     <span className="text-7xl drop-shadow-sm select-none transition-transform duration-300 group-hover:scale-110">{item.imagen || "🍽️"}</span>

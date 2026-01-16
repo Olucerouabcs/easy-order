@@ -4,33 +4,31 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { db, auth } from "../firebase/config";
 import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { Lock, LogOut, X, ArrowLeft } from "lucide-react"; 
+import { Lock, LogOut, X, ArrowLeft, Moon, Sun } from "lucide-react"; 
 import Menu from "../components/Menu";
 import OrderSummary from "../components/OrderSummary";
 import ProductModal from "../components/ProductModal";
+import { useTheme } from "../context/ThemeContext"; 
 
 export default function Kiosk() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme(); 
   
-  // Parámetros de URL
   const numeroMesa = searchParams.get("mesa");
   const idRestaurante = searchParams.get("id");
   const mode = searchParams.get("mode"); 
+  const nombreMesero = searchParams.get("mesero");
   
   const isKioskMode = mode === "kiosk";
   const isWaiterMode = mode === "waiter"; 
 
-  // --- LÓGICA DE REDIRECCIÓN (NUEVO) ---
-  // Si alguien entra a la página principal sin un ID de restaurante (ej: melu.app),
-  // asumimos que es el dueño y lo mandamos al Login.
   useEffect(() => {
     if (!idRestaurante) {
       navigate("/login");
     }
   }, [idRestaurante, navigate]);
 
-  // ESTADO DE CONFIGURACIÓN (MARCA)
   const [config, setConfig] = useState({
       nombreRestaurante: "Cargando...",
       colorPrimario: "#ea580c", 
@@ -39,34 +37,26 @@ export default function Kiosk() {
 
   const [platillos, setPlatillos] = useState([]);
   const [cargando, setCargando] = useState(true);
-  
   const [carrito, setCarrito] = useState([]);
   const [verOrden, setVerOrden] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
-
   const [mostrarCandado, setMostrarCandado] = useState(false);
   const [passwordSalida, setPasswordSalida] = useState("");
   const [errorSalida, setErrorSalida] = useState("");
 
   useEffect(() => {
     if (!idRestaurante) return;
-    
     const cargarTodo = async () => {
         try {
-            // 1. CARGAR CONFIGURACIÓN DE MARCA
             const configRef = doc(db, "configuracion", idRestaurante);
             const configSnap = await getDoc(configRef);
-            if (configSnap.exists()) {
-                setConfig(configSnap.data());
-            }
+            if (configSnap.exists()) setConfig(configSnap.data());
 
-            // 2. CARGAR MENÚ
             const q = query(collection(db, "menu"), where("uid", "==", idRestaurante));
             const respuesta = await getDocs(q);
-            const productos = respuesta.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-            setPlatillos(productos);
+            setPlatillos(respuesta.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
         } catch (error) {
-            console.error("Error cargando datos:", error);
+            console.error(error);
         } finally {
             setCargando(false);
         }
@@ -84,46 +74,47 @@ export default function Kiosk() {
     try { 
         await signInWithEmailAndPassword(auth, auth.currentUser.email, passwordSalida); 
         navigate("/admin"); 
-    } catch (e) { 
-        console.error(e);
+    } catch (error) { // <--- CORRECCIÓN: Usamos 'error' y lo logueamos
+        console.error(error);
         setErrorSalida("Contraseña incorrecta"); 
     }
   };
 
-  // Si no hay ID, retornamos null para que no se vea nada antes de redirigir
   if (!idRestaurante) return null;
-
-  if (cargando) return <div className="min-h-screen flex items-center justify-center font-bold text-gray-400">Cargando Kiosco...</div>;
+  if (cargando) return <div className="min-h-screen flex items-center justify-center font-bold text-gray-400 dark:bg-slate-950">Cargando...</div>;
 
   return (
-    <div className="min-h-screen pb-24 relative transition-colors duration-500" style={{ backgroundColor: config.colorFondo }}>
+    <div className="min-h-screen pb-24 relative transition-colors duration-500 dark:bg-slate-950" 
+         style={{ backgroundColor: theme === 'dark' ? '#020617' : config.colorFondo }}>
       
-      {/* HEADER PERSONALIZADO */}
-      <header className="bg-white shadow-sm p-4 sticky top-0 z-20 flex justify-between items-center border-b border-gray-100">
+      <header className="bg-white dark:bg-slate-900 shadow-sm p-4 sticky top-0 z-20 flex justify-between items-center border-b border-gray-100 dark:border-slate-800 transition-colors">
         <div className="flex items-center gap-3">
             {isWaiterMode && (
-                <button onClick={() => navigate(`/mesero?id=${idRestaurante}`)} className="bg-gray-100 p-2 rounded-full hover:bg-gray-200 text-gray-700 transition active:scale-95">
+                <button onClick={() => navigate(`/mesero?id=${idRestaurante}`)} className="bg-gray-100 dark:bg-slate-800 p-2 rounded-full hover:bg-gray-200 dark:text-white transition">
                     <ArrowLeft size={20} />
                 </button>
             )}
-            
             <div>
-                <h1 className="font-black text-xl text-gray-800 leading-none tracking-tight">
+                <h1 className="font-black text-xl text-gray-800 dark:text-white leading-none tracking-tight">
                     {numeroMesa ? `Mesa ${numeroMesa}` : config.nombreRestaurante}
                 </h1>
                 <div className="flex items-center gap-1">
-                    {isWaiterMode && <span className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Staff</span>}
+                    {isWaiterMode && <span className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-bold uppercase">Staff</span>}
                     <span className="text-[10px] text-gray-400 font-medium">Powered by MeLu</span>
                 </div>
             </div>
         </div>
 
-        {isKioskMode && (
-          <button onClick={() => setMostrarCandado(true)} className="text-gray-300 hover:text-red-500 transition"><Lock size={20} /></button>
-        )}
+        <div className="flex gap-2">
+            <button onClick={toggleTheme} className="p-2 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-white transition">
+                {theme === 'dark' ? <Sun size={20}/> : <Moon size={20}/>}
+            </button>
+            {isKioskMode && (
+              <button onClick={() => setMostrarCandado(true)} className="text-gray-300 hover:text-red-500 transition"><Lock size={20} /></button>
+            )}
+        </div>
       </header>
 
-      {/* MODAL SALIDA */}
       {mostrarCandado && (
         <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95">
@@ -137,7 +128,6 @@ export default function Kiosk() {
         </div>
       )}
 
-      {/* MENÚ */}
       <div className="pt-4">
           <Menu 
             agregarAlCarrito={(item) => setProductoSeleccionado(item)} 
@@ -163,13 +153,13 @@ export default function Kiosk() {
           cancelarOrden={() => setVerOrden(false)}
           idRestaurante={idRestaurante}
           numeroMesa={numeroMesa}
-          colorBoton={config.colorPrimario} 
+          colorBoton={config.colorPrimario}
+          nombreMesero={nombreMesero} 
         />
       )}
 
-      {/* BOTÓN VER ORDEN (FLOTANTE) */}
       {carrito.length > 0 && !verOrden && (
-        <div className="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur border-t p-4 shadow-lg z-20 safe-area-bottom">
+        <div className="fixed bottom-0 left-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur border-t dark:border-slate-800 p-4 shadow-lg z-20 safe-area-bottom">
             <button 
               style={{ backgroundColor: config.colorPrimario }}
               className="w-full text-white py-4 rounded-xl font-bold shadow-lg active:scale-95 transition flex justify-between px-6 hover:brightness-110"
