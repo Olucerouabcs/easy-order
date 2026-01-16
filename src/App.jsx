@@ -7,6 +7,7 @@ import Kiosk from "./pages/Kiosk";
 import Kitchen from "./pages/Kitchen";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
+import Waiter from "./pages/Waiter";
 
 // --- COMPONENTE DE SEGURIDAD ---
 // Este componente envuelve a los que queremos proteger
@@ -61,6 +62,7 @@ function App() {
             <Kitchen />
           </RutaProtegida>
         } />
+        <Route path="/mesero" element={<Waiter />} />
         
       </Routes>
     </BrowserRouter>
